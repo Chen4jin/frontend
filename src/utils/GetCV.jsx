@@ -1,10 +1,10 @@
 import axios from "axios";
-import { domain } from "../common/domain";
+import { BACKEND, API_VERSION } from "../common/common";
 import { createAsyncThunk } from "@reduxjs/toolkit";
 
 export const getCV = createAsyncThunk("cv", async (_, { rejectWithValue }) => {
     try {
-        const url = domain + "cv";
+        const url = BACKEND + API_VERSION + "cv";
         const response = await axios.get(url);
         return response.data;
     } catch (error) {

@@ -19,7 +19,6 @@ const Collections = () => {
     };
 
     useEffect(() => {
-        console.log(imagesLoad)
         if (!imagesLoad) {
             dispatch(fetchImages({ lastKey: "", page: page }));
             dispatch(loadImage())
@@ -33,10 +32,10 @@ const Collections = () => {
                 <div className="max-w-2xl py-32 sm:py-48 lg:py-32">
                     <div className="text-left">
                         <h1 className="text-5xl font-BlinkMacSystemFont tracking-tight text-balance text-gray-900 sm:text-7xl">
-                            Jin's Collections
+                            Collections
                         </h1>
                         <p className="mt-8 text-lg font-BlinkMacSystemFont text-pretty text-gray-500 sm:text-xl/8">
-                            Welcome to my curated gallery of moments captured through my lens. This collection showcases a blend of memories, travels, and everyday inspirations — each photo telling its own unique story. Feel free to explore and enjoy the visual journey!
+                            Through my lens:<br/>a journey of moments, memories, and inspiration.
                         </p>
                     </div>
                 </div>
@@ -58,7 +57,6 @@ const Collections = () => {
                     </InfiniteScroll>
                 </div>
             </div>
-            <Stats />
         </div>
     );
 };

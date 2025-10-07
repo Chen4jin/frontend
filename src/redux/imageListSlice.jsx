@@ -1,10 +1,10 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import { domain } from "../common/domain";
+import { BACKEND, API_VERSION } from "../common/common";
 import axios from "axios";
 
 export const fetchImages = createAsyncThunk("images/fetchImages", async ({ lastKey, page }, { rejectWithValue }) => {
     try {
-        const url = domain + "photo";
+        const url = BACKEND + API_VERSION + "images";
         const params = lastKey  ? { lastKey: lastKey, page: page } : {page: page }
         const response = await axios.get(url, {
             params: params,
@@ -43,7 +43,6 @@ const imageListSlice = createSlice({
                 state.error = null;
             })
             .addCase(fetchImages.fulfilled, (state, action) => {
-                console.log(action.payload);
                 state.images.push(...action.payload.apiResponse.data);
                 state.page = 10;
                 state.hasMore = action.payload.hasMore;

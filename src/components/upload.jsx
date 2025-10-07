@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import axios from "axios";
 import { v4 as uuidv4 } from "uuid";
-import { domain } from "../common/domain";
+import { BACKEND, API_VERSION } from "../common/common";
 
 const Upload = () => {
     const [fileCollections, updateFileCollections] = useState([]);
@@ -26,7 +26,7 @@ const Upload = () => {
             const formData = new FormData();
             formData.append("files", collections[i].data);
             try {
-                const responseData = (await axios.put(domain + "photo")).data["data"]
+                const responseData = (await axios.put(BACKEND + API_VERSION + "images")).data["data"]
                 const signedURL = responseData["url"];
                 const imageID = responseData["imageID"];
                 const response = await axios.put(signedURL, collections[i].data, {
@@ -41,7 +41,7 @@ const Upload = () => {
                         state: "success",
 
                     };
-                    await axios.post(domain + "photo", {
+                    await axios.post(BACKEND + API_VERSION + "images", {
                         imageID: imageID,
                         fileName: collections[i].data.name,
                         sizeBytes: collections[i].data.size,

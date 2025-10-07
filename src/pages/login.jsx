@@ -25,9 +25,9 @@ const Login = () => {
     const handleSubmitEvent = (e) => {
         e.preventDefault();
         handleLogin({ email: input.email, password: input.password, dispatch: dispatch });
-        if (status) {
+        /*if (status) {
             navigate("/dashboard");
-        }
+        }*/
     };
 
     const handleInput = (e) => {
@@ -42,11 +42,6 @@ const Login = () => {
         <>
             <div className="flex min-h-full flex-1 flex-col justify-center px-6 py-12 lg:px-8 bg-gray-50">
                 <div className="sm:mx-auto sm:w-full sm:max-w-sm ">
-                    <img
-                        alt="Admin Page"
-                        src="img/logo.png"
-                        className="mx-auto h-20 w-auto "
-                    />
                     <h2 className="mt-10 text-center text-2xl/9 font-bold tracking-tight text-gray-900">
                         Sign in to your account
                     </h2>
