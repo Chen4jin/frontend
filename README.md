@@ -152,71 +152,64 @@ Reusable component classes in `index.css`:
 
 ## Deployment
 
-### Cloudflare Pages (CI/CD)
+### Cloudflare Pages
 
-The project uses GitHub Actions for automatic deployment to Cloudflare Pages.
+The project is deployed via Cloudflare Pages with Git integration.
 
-#### Setup Steps:
+#### Setup:
 
-1. **Create Cloudflare Pages Project**
+1. **Connect Repository**
    - Go to [Cloudflare Dashboard](https://dash.cloudflare.com/) → Pages
-   - Create a new project named `jin-chen-portfolio`
+   - Create project → Connect to Git → Select `Chen4jin/frontend`
 
-2. **Get Cloudflare Credentials**
-   - Go to [API Tokens](https://dash.cloudflare.com/profile/api-tokens)
-   - Create token with `Cloudflare Pages: Edit` permission
-   - Note your Account ID from the dashboard URL
+2. **Build Settings**
+   | Setting | Value |
+   |---------|-------|
+   | Build command | `npm run build` |
+   | Build output | `dist` |
+   | Node version | `20` |
 
-3. **Add GitHub Secrets**
+3. **Environment Variables**
    
-   Go to your repo → Settings → Secrets → Actions, add:
+   Add in Cloudflare Pages → Settings → Environment variables:
 
-   | Secret | Description |
-   |--------|-------------|
-   | `CLOUDFLARE_API_TOKEN` | Cloudflare API token |
-   | `CLOUDFLARE_ACCOUNT_ID` | Your Cloudflare account ID |
-   | `VITE_FIREBASE_API_KEY` | Firebase API key |
-   | `VITE_FIREBASE_AUTH_DOMAIN` | Firebase auth domain |
-   | `VITE_FIREBASE_PROJECT_ID` | Firebase project ID |
+   | Variable | Value |
+   |----------|-------|
+   | `VITE_FIREBASE_API_KEY` | Your Firebase API key |
+   | `VITE_FIREBASE_AUTH_DOMAIN` | Your Firebase auth domain |
+   | `VITE_FIREBASE_PROJECT_ID` | Your Firebase project ID |
    | `VITE_BACKEND` | Backend API URL |
    | `VITE_API_VERSION` | API version (e.g., `v1/`) |
 
-4. **Push to main**
-   ```bash
-   git push origin main
-   ```
-   
-   The workflow will automatically build and deploy.
+4. **Custom Domain**
+   - Go to Custom domains → Add `chenjq.com`
 
-#### Workflow Features:
-- Runs on push to `main` branch
-- Runs linter before build
-- Injects environment variables at build time
-- Deploys to Cloudflare Pages
+#### Features:
+- Auto-deploys on push to `main`
+- Preview deployments for PRs
+- Automatic SSL/HTTPS
 
-### Creating a Release
+### Auto Releases
 
-To create a new release with automatic deployment:
+GitHub Actions automatically creates version tags and releases on push to `main`.
 
-```bash
-# Create and push a tag
-git tag v1.0.0
-git push origin v1.0.0
+**Flow:**
+```
+Push to main → Auto-tag (v1.0.1) → GitHub Release created
 ```
 
-This will:
-1. Create a GitHub Release with auto-generated changelog
-2. Deploy to production on Cloudflare Pages
+**Version bumping** (based on commit messages):
+| Commit Prefix | Bump |
+|---------------|------|
+| `feat:` | Minor (v1.0.0 → v1.1.0) |
+| `fix:` | Patch (v1.0.0 → v1.0.1) |
+| `BREAKING CHANGE:` | Major (v1.0.0 → v2.0.0) |
 
-**Tag format:**
-- `v1.0.0` - Production release
-- `v1.0.0-beta.1` - Pre-release (marked as pre-release on GitHub)
-
-### Manual Deployment
+### Manual Release
 
 ```bash
-npm run build
-npx wrangler pages deploy dist --project-name=jin-chen-portfolio
+git tag v1.0.0
+git push origin v1.0.0
 ```
 
 ## Browser Support

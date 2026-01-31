@@ -1,10 +1,7 @@
 name: Auto Release
 
 on:
-  workflow_run:
-    workflows: ["CD"]
-    types:
-      - completed
+  push:
     branches:
       - main
 
@@ -12,7 +9,6 @@ jobs:
   auto-tag:
     name: Create Release Tag
     runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     
     permissions:
       contents: write
