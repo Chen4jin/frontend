@@ -1,33 +1,69 @@
-import { useState } from "react";
-import Alert from "../components/alert";
-import { useDispatch } from "react-redux";
-import { handleLogin } from "../firebase/auth";
-import { useSelector } from "react-redux";
-import { useNavigate } from "react-router-dom";
-import { handleSignedIn } from "../firebase/auth";
+/**
+ * Login Page
+ * User authentication form with validation
+ */
+
+import { useState, useEffect } from 'react';
+import { Link, Navigate } from 'react-router-dom';
+
+import Navbar from '../components/navbar';
+import { Input, Button, ExclamationCircleIcon, XMarkIcon } from '../components/ui';
+import { useAuth } from '../hooks';
+import { ROUTES } from '../constants';
+
+// Email validation regex
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const Login = () => {
-    const navigate = useNavigate();
-    const { status } = useSelector((state) => state.user);
-
+    const { login, error, loading, clearAuthError, isAuthenticated } = useAuth();
     const [input, setInput] = useState({
-        email: "",
-        password: "",
+        email: '',
+        password: '',
     });
-    const dispatch = useDispatch();
+    const [validation, setValidation] = useState({
+        email: '',
+        password: '',
+    });
+    const [touched, setTouched] = useState({
+        email: false,
+        password: false,
+    });
 
-    // const [notificationPayload, setNotification] = useState({
-    //     show: false,
-    //     type: "",
-    //     message: "",
-    // });
+    // Clear auth error when component unmounts (user leaves page)
+    useEffect(() => {
+        return () => {
+            clearAuthError();
+        };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
-    const handleSubmitEvent = (e) => {
-        e.preventDefault();
-        handleLogin({ email: input.email, password: input.password, dispatch: dispatch });
-        /*if (status) {
-            navigate("/dashboard");
-        }*/
+    // Clear auth error when user starts typing
+    useEffect(() => {
+        if (error && (input.email || input.password)) {
+            clearAuthError();
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [input.email, input.password]);
+
+    // Redirect if already authenticated
+    if (isAuthenticated) {
+        return <Navigate to={ROUTES.DASHBOARD} replace />;
+    }
+
+    // Validate individual field
+    const validateField = (name, value) => {
+        switch (name) {
+            case 'email':
+                if (!value) return 'Email is required';
+                if (!EMAIL_REGEX.test(value)) return 'Please enter a valid email';
+                return '';
+            case 'password':
+                if (!value) return 'Password is required';
+                if (value.length < 6) return 'Password must be at least 6 characters';
+                return '';
+            default:
+                return '';
+        }
     };
 
     const handleInput = (e) => {
@@ -36,85 +72,163 @@ const Login = () => {
             ...prev,
             [name]: value,
         }));
+        
+        // Validate on change if field was touched
+        if (touched[name]) {
+            setValidation((prev) => ({
+                ...prev,
+                [name]: validateField(name, value),
+            }));
+        }
+    };
+
+    const handleBlur = (e) => {
+        const { name, value } = e.target;
+        setTouched((prev) => ({
+            ...prev,
+            [name]: true,
+        }));
+        setValidation((prev) => ({
+            ...prev,
+            [name]: validateField(name, value),
+        }));
+    };
+
+    const handleSubmitEvent = async (e) => {
+        e.preventDefault();
+        
+        // Validate all fields
+        const emailError = validateField('email', input.email);
+        const passwordError = validateField('password', input.password);
+        
+        setValidation({
+            email: emailError,
+            password: passwordError,
+        });
+        setTouched({
+            email: true,
+            password: true,
+        });
+
+        // Don't submit if validation errors
+        if (emailError || passwordError) {
+            return;
+        }
+
+        await login(input.email, input.password);
     };
 
     return (
-        <>
-            <div className="flex min-h-full flex-1 flex-col justify-center px-6 py-12 lg:px-8 bg-gray-50">
-                <div className="sm:mx-auto sm:w-full sm:max-w-sm ">
-                    <h2 className="mt-10 text-center text-2xl/9 font-bold tracking-tight text-gray-900">
-                        Sign in to your account
-                    </h2>
-                </div>
-                <div className="mt-10 w-full sm:mx-auto max-w-sm p-4 bg-white border border-gray-200 rounded-lg shadow-sm sm:p-6 md:p-8 dark:bg-gray-800 dark:border-gray-700">
-                    <div className="sm:mx-auto sm:w-full sm:max-w-sm">
-                        <form onSubmit={handleSubmitEvent} className="space-y-6">
-                            <div>
-                                <label
-                                    htmlFor="email"
-                                    className="block text-sm/6 font-medium text-gray-900 justify-self-start"
-                                >
-                                    Email address
-                                </label>
-                                <div className="mt-2">
-                                    <input
-                                        id="email"
-                                        name="email"
-                                        type="email"
-                                        autoComplete="email"
-                                        className="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6 border bg-gray-50"
-                                        onChange={handleInput}
-                                    />
-                                </div>
-                            </div>
-
-                            <div>
-                                <div className="flex items-center justify-between">
-                                    <label htmlFor="password" className="block text-sm/6 font-medium text-gray-900">
-                                        Password
-                                    </label>
-                                </div>
-                                <div className="mt-2">
-                                    <input
-                                        id="password"
-                                        name="password"
-                                        type="password"
-                                        autoComplete="current-password"
-                                        className="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6 border bg-gray-50 "
-                                        onChange={handleInput}
-                                    />
-                                </div>
-                            </div>
-                            {/* notificationPayload.show && <Alert type={notificationPayload.type} message={notificationPayload.message} />} */}
-                            {/* <div className="flex items-start">
-                                <div className="flex items-center h-5">
-                                    <input
-                                        id="remember"
-                                        type="checkbox"
-                                        value=""
-                                        className="w-4 h-4 border border-gray-300 rounded-sm bg-gray-50 focus:ring-3 focus:ring-blue-300 dark:bg-gray-700 dark:border-gray-600 dark:focus:ring-blue-600 dark:ring-offset-gray-800 dark:focus:ring-offset-gray-800"
-                                    />
-                                </div>
-                                <label
-                                    htmlFor="remember"
-                                    className="ms-2 text-sm font-medium text-gray-900 dark:text-gray-300"
-                                >
-                                    Remember me
-                                </label>
-                            </div> */}
-                            <div>
-                                <button
-                                    type="submit"
-                                    className="flex w-full justify-center rounded-md bg-indigo-600 px-3 py-1.5 text-sm/6 font-semibold text-white shadow-xs hover:bg-indigo-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-                                >
-                                    Sign in
-                                </button>
-                            </div>
-                        </form>
+        <div className="min-h-screen bg-neutral-50">
+            <Navbar />
+            
+            <div className="flex min-h-[calc(100vh-56px)] flex-col justify-center px-4 sm:px-6">
+                <div className="sm:mx-auto sm:w-full sm:max-w-md">
+                    {/* Header */}
+                    <div className="text-center mb-8 opacity-0 animate-fade-in-up animation-delay-100">
+                        <h1 className="text-3xl font-semibold text-neutral-900">
+                            Welcome back
+                        </h1>
+                        <p className="mt-2 text-neutral-500">
+                            Sign in to your account to continue
+                        </p>
                     </div>
+
+                    {/* Form Card */}
+                    <div className="bg-white rounded-2xl shadow-sm border border-neutral-200/60 p-6 sm:p-8 opacity-0 animate-fade-in-up animation-delay-200">
+                        <form onSubmit={handleSubmitEvent} className="space-y-5" noValidate>
+                            {/* Email Field */}
+                            <Input
+                                id="email"
+                                name="email"
+                                type="email"
+                                label="Email"
+                                autoComplete="email"
+                                placeholder="name@example.com"
+                                onChange={handleInput}
+                                onBlur={handleBlur}
+                                value={input.email}
+                                error={touched.email ? validation.email : ''}
+                                aria-describedby={validation.email ? 'email-error' : undefined}
+                            />
+
+                            {/* Password Field */}
+                            <Input
+                                id="password"
+                                name="password"
+                                type="password"
+                                label="Password"
+                                autoComplete="current-password"
+                                placeholder="Enter your password"
+                                onChange={handleInput}
+                                onBlur={handleBlur}
+                                value={input.password}
+                                error={touched.password ? validation.password : ''}
+                                aria-describedby={validation.password ? 'password-error' : undefined}
+                            />
+
+                            {/* Server Error Message */}
+                            {error && (
+                                <div 
+                                    className="alert-error animate-fade-in"
+                                    role="alert"
+                                    aria-live="polite"
+                                >
+                                    <ExclamationCircleIcon className="alert-error-icon" />
+                                    <div className="flex-1">
+                                        <p className="alert-error-title">Authentication failed</p>
+                                        <p className="alert-error-message">{error}</p>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={clearAuthError}
+                                        className="alert-error-dismiss"
+                                        aria-label="Dismiss error"
+                                    >
+                                        <XMarkIcon className="w-4 h-4" />
+                                    </button>
+                                </div>
+                            )}
+
+                            {/* Submit Button */}
+                            <Button
+                                type="submit"
+                                loading={loading}
+                                disabled={loading}
+                                className="w-full"
+                            >
+                                {loading ? 'Signing in...' : 'Sign in'}
+                            </Button>
+                        </form>
+
+                        {/* Divider */}
+                        <div className="relative my-6">
+                            <div className="absolute inset-0 flex items-center">
+                                <div className="w-full border-t border-neutral-200" />
+                            </div>
+                            <div className="relative flex justify-center text-sm">
+                                <span className="bg-white px-4 text-neutral-400">or</span>
+                            </div>
+                        </div>
+
+                        {/* Back to Home */}
+                        <div className="text-center">
+                            <Link 
+                                to={ROUTES.HOME}
+                                className="text-sm font-medium text-neutral-600 hover:text-neutral-900 transition-colors duration-200"
+                            >
+                                ← Back to home
+                            </Link>
+                        </div>
+                    </div>
+
+                    {/* Footer */}
+                    <p className="mt-6 text-center text-xs text-neutral-400 opacity-0 animate-fade-in animation-delay-300">
+                        Protected by industry-standard encryption
+                    </p>
                 </div>
             </div>
-        </>
+        </div>
     );
 };
 

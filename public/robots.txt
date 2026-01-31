@@ -1,3 +1,10 @@
 # https://www.robotstxt.org/robotstxt.html
 User-agent: *
-Disallow: /
+Allow: /
+
+# Disallow admin/dashboard routes
+Disallow: /dashboard
+Disallow: /login
+
+# Sitemap
+Sitemap: https://chenjq.com/sitemap.xml

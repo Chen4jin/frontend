@@ -1,25 +1,27 @@
 {
-  "short_name": "React App",
-  "name": "React App",
+  "name": "Jin Chen - Portfolio",
+  "short_name": "Jin Chen",
+  "description": "Software Engineer & Photographer portfolio showcasing projects and photography collections.",
+  "start_url": "/",
+  "display": "standalone",
+  "theme_color": "#1d1d1f",
+  "background_color": "#fbfbfd",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "lang": "en",
+  "categories": ["portfolio", "photography", "personal"],
   "icons": [
     {
-      "src": "img/logo.png",
-      "sizes": "64x64 32x32 24x24 16x16",
-      "type": "image/x-icon"
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
     },
     {
-      "src": "img/logo.png",
-      "type": "image/png",
-      "sizes": "192x192"
-    },
-    {
-      "src": "img/logo.png",
-      "type": "image/png",
-      "sizes": "512x512"
+      "src": "/apple-touch-icon.svg",
+      "sizes": "180x180",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
     }
-  ],
-  "start_url": ".",
-  "display": "standalone",
-  "theme_color": "#000000",
-  "background_color": "#ffffff"
+  ]
 }

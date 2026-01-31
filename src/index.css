@@ -1,16 +1,508 @@
-body {
-    margin: 0;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans",
-        "Droid Sans", "Helvetica Neue", sans-serif;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-    height: 100%;
-}
-
-code {
-    font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New", monospace;
-}
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* =============================================
+   BASE STYLES - Apple Design System
+   ============================================= */
+@layer base {
+    html {
+        @apply antialiased;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        text-rendering: optimizeLegibility;
+    }
+
+    body {
+        @apply font-sans bg-apple-bg text-apple-black;
+        margin: 0;
+        height: 100%;
+    }
+
+    /* Selection Color */
+    ::selection {
+        @apply bg-apple-blue/20 text-apple-black;
+    }
+}
+
+/* =============================================
+   TYPOGRAPHY COMPONENTS
+   Reusable text classes for consistent styling
+   ============================================= */
+@layer components {
+    /* Display Headlines - Hero sections */
+    .text-hero {
+        @apply font-display font-semibold tracking-apple-tight leading-apple-tight text-apple-black;
+    }
+
+    .text-hero-xl {
+        @apply text-hero text-5xl sm:text-6xl md:text-7xl lg:text-8xl;
+    }
+
+    .text-hero-lg {
+        @apply text-hero text-4xl sm:text-5xl md:text-6xl lg:text-7xl;
+    }
+
+    .text-hero-md {
+        @apply text-hero text-3xl sm:text-4xl md:text-5xl lg:text-6xl;
+    }
+
+    /* Headline - Section titles */
+    .text-headline {
+        @apply font-display font-semibold tracking-apple-normal leading-apple-snug text-apple-black;
+    }
+
+    .text-headline-lg {
+        @apply text-headline text-2xl sm:text-3xl md:text-4xl;
+    }
+
+    .text-headline-md {
+        @apply text-headline text-xl sm:text-2xl md:text-3xl;
+    }
+
+    .text-headline-sm {
+        @apply text-headline text-lg sm:text-xl md:text-2xl;
+    }
+
+    /* Body Text */
+    .text-body {
+        @apply font-sans font-normal leading-apple-relaxed text-apple-gray;
+    }
+
+    .text-body-lg {
+        @apply text-body text-lg sm:text-xl lg:text-2xl;
+    }
+
+    .text-body-md {
+        @apply text-body text-base sm:text-lg;
+    }
+
+    .text-body-sm {
+        @apply text-body text-sm sm:text-base;
+    }
+
+    /* Labels & Captions */
+    .text-label {
+        @apply font-sans font-medium text-sm text-apple-gray tracking-tight;
+    }
+
+    .text-caption {
+        @apply font-sans font-normal text-xs text-apple-gray-dark;
+    }
+
+    /* Links - Apple style (opacity-based hover) */
+    .link-primary {
+        @apply text-apple-black font-normal transition-opacity duration-300 hover:opacity-60;
+    }
+
+    .link-secondary {
+        @apply text-apple-black font-normal transition-opacity duration-300 hover:opacity-60;
+    }
+
+    .link-subtle {
+        @apply text-apple-gray font-normal transition-opacity duration-300 hover:opacity-60;
+    }
+
+    /* Link with arrow animation */
+    .link-arrow {
+        @apply inline-flex items-center gap-2 text-apple-black font-normal transition-opacity duration-300 hover:opacity-60;
+    }
+
+    /* Gradient Text - Apple style subtle gradients */
+    .text-gradient {
+        @apply bg-clip-text text-transparent;
+    }
+
+    .text-gradient-gray {
+        @apply text-gradient bg-gradient-to-r from-apple-gray-dark to-apple-gray;
+    }
+
+    .text-gradient-subtle {
+        @apply text-gradient bg-gradient-to-r from-apple-gray to-apple-gray-light;
+    }
+
+    /* Buttons - Apple style */
+    .btn-primary {
+        @apply inline-flex items-center justify-center gap-2 px-6 py-3 
+               bg-apple-blue text-white font-normal rounded-full
+               hover:bg-apple-blue-hover transition-all duration-300;
+    }
+
+    .btn-secondary {
+        @apply inline-flex items-center justify-center gap-2 px-6 py-3
+               bg-apple-black text-white font-normal rounded-full
+               hover:bg-apple-gray-dark transition-all duration-300;
+    }
+
+    .btn-ghost {
+        @apply inline-flex items-center justify-center gap-2 px-6 py-3
+               text-apple-blue font-normal
+               hover:underline underline-offset-4 transition-all duration-300;
+    }
+
+    /* Form Inputs - Apple style */
+    .input-field {
+        @apply w-full px-4 py-3 
+               bg-apple-bg-secondary text-apple-black text-sm
+               rounded-xl border border-transparent
+               placeholder:text-apple-gray
+               transition-all duration-200
+               focus:outline-none focus:bg-white focus:border-apple-gray-light focus:ring-2 focus:ring-apple-black/5;
+    }
+
+    .input-label {
+        @apply block text-sm font-medium text-apple-black mb-2;
+    }
+
+    /* Cards - Apple style */
+    .card {
+        @apply bg-white rounded-2xl p-6 sm:p-8;
+    }
+
+    .card-elevated {
+        @apply card shadow-lg;
+    }
+
+    /* Containers */
+    .container-narrow {
+        @apply max-w-3xl mx-auto px-4 sm:px-6;
+    }
+
+    .container-default {
+        @apply max-w-6xl mx-auto px-4 sm:px-6 lg:px-8;
+    }
+
+    .container-wide {
+        @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+    }
+
+    /* =============================================
+       NAVIGATION COMPONENTS
+       ============================================= */
+
+    /* Icon button - used for menu toggles, close buttons */
+    .icon-btn {
+        @apply p-2.5 rounded-xl text-neutral-600 
+               hover:text-neutral-900 hover:bg-neutral-100/80 
+               transition-all duration-200;
+    }
+
+    .icon-btn-sm {
+        @apply p-2 rounded-lg text-neutral-600 
+               hover:text-neutral-900 hover:bg-neutral-100 
+               transition-all duration-200;
+    }
+
+    /* Nav link - desktop navigation pills */
+    .nav-link {
+        @apply relative flex items-center gap-2 px-4 py-2 rounded-full
+               text-sm font-medium transition-all duration-300
+               text-neutral-500 hover:text-neutral-900 hover:bg-neutral-50;
+    }
+
+    .nav-link-active {
+        @apply text-neutral-900 bg-neutral-100;
+    }
+
+    .nav-link-icon {
+        @apply w-4 h-4 transition-colors duration-300 text-neutral-400;
+    }
+
+    .nav-link-icon-active {
+        @apply text-neutral-700;
+    }
+
+    /* Mobile nav link - full width navigation items */
+    .mobile-nav-link {
+        @apply flex items-center gap-4 px-4 py-4 rounded-2xl
+               transition-all duration-200
+               text-neutral-600 hover:bg-neutral-50 hover:text-neutral-900;
+    }
+
+    .mobile-nav-link-active {
+        @apply bg-neutral-100 text-neutral-900;
+    }
+
+    .mobile-nav-icon-wrapper {
+        @apply p-2.5 rounded-xl transition-colors duration-200
+               bg-neutral-100 text-neutral-500;
+    }
+
+    .mobile-nav-icon-wrapper-active {
+        @apply bg-neutral-900 text-white;
+    }
+
+    /* Sidebar nav link */
+    .sidebar-link {
+        @apply flex items-center gap-3 px-3 py-2.5 rounded-lg
+               text-sm font-medium transition-all duration-200
+               text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900;
+    }
+
+    .sidebar-link-active {
+        @apply bg-neutral-200/70 text-neutral-900;
+    }
+
+    .sidebar-link-icon {
+        @apply w-5 h-5 transition-colors duration-200 text-neutral-500;
+    }
+
+    .sidebar-link-icon-active {
+        @apply text-neutral-900;
+    }
+
+    /* =============================================
+       LIGHTBOX & OVERLAY COMPONENTS
+       ============================================= */
+
+    /* Lightbox control button */
+    .lightbox-btn {
+        @apply p-2 rounded-full bg-white/10 text-white 
+               hover:bg-white/20 transition-colors duration-200;
+    }
+
+    .lightbox-btn-lg {
+        @apply p-3 rounded-full bg-white/10 text-white 
+               hover:bg-white/20 transition-colors duration-200;
+    }
+
+    .lightbox-btn-active {
+        @apply bg-white text-black;
+    }
+
+    /* Info panel badge/pill */
+    .info-pill {
+        @apply px-2.5 py-1 rounded-full bg-white/10 text-white text-xs font-medium;
+    }
+
+    /* Keyboard hint badge */
+    .kbd {
+        @apply px-2 py-1 rounded bg-white/10 text-white/50 text-xs;
+    }
+
+    /* Counter badge */
+    .counter-badge {
+        @apply px-3 py-1.5 rounded-full bg-white/10 text-white text-sm;
+    }
+
+    /* =============================================
+       ALERT & STATUS COMPONENTS
+       ============================================= */
+
+    /* Error alert box */
+    .alert-error {
+        @apply flex items-start gap-3 p-4 rounded-xl 
+               bg-red-50 border border-red-100;
+    }
+
+    .alert-error-icon {
+        @apply w-5 h-5 text-red-500 flex-shrink-0 mt-0.5;
+    }
+
+    .alert-error-title {
+        @apply text-sm font-medium text-red-800;
+    }
+
+    .alert-error-message {
+        @apply text-sm text-red-600 mt-0.5;
+    }
+
+    .alert-error-dismiss {
+        @apply p-1 rounded-lg text-red-400 
+               hover:text-red-600 hover:bg-red-100 
+               transition-colors duration-200;
+    }
+
+    /* =============================================
+       USER & AVATAR COMPONENTS
+       ============================================= */
+
+    /* User avatar circle */
+    .avatar {
+        @apply flex items-center justify-center rounded-full 
+               bg-neutral-900 text-white font-medium;
+    }
+
+    .avatar-sm {
+        @apply avatar w-8 h-8 text-sm;
+    }
+
+    .avatar-md {
+        @apply avatar w-9 h-9 text-sm;
+    }
+
+    .avatar-lg {
+        @apply avatar w-12 h-12 text-base;
+    }
+
+    /* User card in sidebar */
+    .user-card {
+        @apply flex items-center gap-3 px-3 py-3 rounded-xl 
+               bg-white border border-neutral-200/60;
+    }
+
+    /* =============================================
+       PANEL & SECTION COMPONENTS
+       ============================================= */
+
+    /* Panel section divider */
+    .panel-divider {
+        @apply pb-4 border-b border-white/10;
+    }
+
+    /* Panel section header */
+    .panel-section-title {
+        @apply text-xs font-medium text-white/50 uppercase tracking-wider mb-2;
+    }
+
+    /* Sticky panel header */
+    .panel-header {
+        @apply sticky top-0 flex items-center justify-between p-4 
+               border-b border-white/10 bg-black/50 backdrop-blur-sm;
+    }
+
+    /* Sign out button */
+    .btn-signout {
+        @apply w-full flex items-center justify-center gap-2 px-4 py-2.5 
+               rounded-xl text-sm font-medium text-red-600 
+               hover:bg-red-50 transition-all duration-200;
+    }
+}
+
+/* Entrance Animations */
+@keyframes fade-in-up {
+    0% {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fade-in-scale {
+    0% {
+        opacity: 0;
+        transform: scale(0.9);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+@keyframes fade-in {
+    0% {
+        opacity: 0;
+    }
+    100% {
+        opacity: 1;
+    }
+}
+
+.animate-fade-in-up {
+    animation: fade-in-up 0.8s ease-out forwards;
+}
+
+.animate-fade-in-scale {
+    animation: fade-in-scale 0.8s ease-out forwards;
+}
+
+.animate-fade-in {
+    animation: fade-in 0.6s ease-out forwards;
+}
+
+/* Animation delays for staggered effect */
+.animation-delay-100 { animation-delay: 100ms; }
+.animation-delay-200 { animation-delay: 200ms; }
+.animation-delay-300 { animation-delay: 300ms; }
+.animation-delay-400 { animation-delay: 400ms; }
+.animation-delay-500 { animation-delay: 500ms; }
+.animation-delay-600 { animation-delay: 600ms; }
+.animation-delay-700 { animation-delay: 700ms; }
+
+/* =============================================
+   MOBILE MENU ANIMATIONS
+   ============================================= */
+@keyframes menu-slide-in {
+    0% {
+        opacity: 0;
+        transform: translateX(20px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes menu-item-fade {
+    0% {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Menu panel slide animation */
+.menu-panel-enter {
+    animation: menu-slide-in 0.3s ease-out forwards;
+}
+
+/* Menu item stagger animation */
+.menu-item-animate {
+    opacity: 0;
+    animation: menu-item-fade 0.4s ease-out forwards;
+}
+
+/* Stagger delays for menu items */
+.menu-item-delay-1 { animation-delay: 100ms; }
+.menu-item-delay-2 { animation-delay: 150ms; }
+.menu-item-delay-3 { animation-delay: 200ms; }
+.menu-item-delay-4 { animation-delay: 250ms; }
+.menu-item-delay-5 { animation-delay: 300ms; }
+
+/* =============================================
+   SKELETON LOADING ANIMATION
+   ============================================= */
+@keyframes skeleton-shimmer {
+    0% {
+        background-position: -200% 0;
+    }
+    100% {
+        background-position: 200% 0;
+    }
+}
+
+.skeleton-loading {
+    background: linear-gradient(
+        90deg,
+        #f5f5f7 0%,
+        #e8e8ed 20%,
+        #f5f5f7 40%,
+        #f5f5f7 100%
+    );
+    background-size: 200% 100%;
+    animation: skeleton-shimmer 1.5s ease-in-out infinite;
+    min-height: 200px;
+}
+
+/* Skeleton variants */
+.skeleton-text {
+    @apply skeleton-loading h-4 rounded;
+}
+
+.skeleton-title {
+    @apply skeleton-loading h-8 rounded;
+}
+
+.skeleton-image {
+    @apply skeleton-loading aspect-square rounded-xl;
+}
+
+.skeleton-avatar {
+    @apply skeleton-loading w-12 h-12 rounded-full;
+}

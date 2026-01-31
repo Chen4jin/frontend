@@ -1,0 +1,6 @@
+# Security Policy
+# If you discover a security vulnerability, please report it responsibly.
+
+Contact: mailto:dev@chenjq.com
+Preferred-Languages: en
+Canonical: https://chenjq.com/.well-known/security.txt
