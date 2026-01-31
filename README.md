@@ -152,20 +152,71 @@ Reusable component classes in `index.css`:
 
 ## Deployment
 
-### Netlify / Vercel
+### Cloudflare Pages (CI/CD)
 
-The project includes `_headers` for security headers. Deploy directly from GitHub:
+The project uses GitHub Actions for automatic deployment to Cloudflare Pages.
 
-1. Connect your repository
-2. Set build command: `npm run build`
-3. Set publish directory: `dist`
-4. Add environment variables
+#### Setup Steps:
 
-### Manual
+1. **Create Cloudflare Pages Project**
+   - Go to [Cloudflare Dashboard](https://dash.cloudflare.com/) → Pages
+   - Create a new project named `jin-chen-portfolio`
+
+2. **Get Cloudflare Credentials**
+   - Go to [API Tokens](https://dash.cloudflare.com/profile/api-tokens)
+   - Create token with `Cloudflare Pages: Edit` permission
+   - Note your Account ID from the dashboard URL
+
+3. **Add GitHub Secrets**
+   
+   Go to your repo → Settings → Secrets → Actions, add:
+
+   | Secret | Description |
+   |--------|-------------|
+   | `CLOUDFLARE_API_TOKEN` | Cloudflare API token |
+   | `CLOUDFLARE_ACCOUNT_ID` | Your Cloudflare account ID |
+   | `VITE_FIREBASE_API_KEY` | Firebase API key |
+   | `VITE_FIREBASE_AUTH_DOMAIN` | Firebase auth domain |
+   | `VITE_FIREBASE_PROJECT_ID` | Firebase project ID |
+   | `VITE_BACKEND` | Backend API URL |
+   | `VITE_API_VERSION` | API version (e.g., `v1/`) |
+
+4. **Push to main**
+   ```bash
+   git push origin main
+   ```
+   
+   The workflow will automatically build and deploy.
+
+#### Workflow Features:
+- Runs on push to `main` branch
+- Runs linter before build
+- Injects environment variables at build time
+- Deploys to Cloudflare Pages
+
+### Creating a Release
+
+To create a new release with automatic deployment:
+
+```bash
+# Create and push a tag
+git tag v1.0.0
+git push origin v1.0.0
+```
+
+This will:
+1. Create a GitHub Release with auto-generated changelog
+2. Deploy to production on Cloudflare Pages
+
+**Tag format:**
+- `v1.0.0` - Production release
+- `v1.0.0-beta.1` - Pre-release (marked as pre-release on GitHub)
+
+### Manual Deployment
 
 ```bash
 npm run build
-# Upload contents of dist/ to your server
+npx wrangler pages deploy dist --project-name=jin-chen-portfolio
 ```
 
 ## Browser Support
