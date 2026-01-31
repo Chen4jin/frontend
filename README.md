@@ -39,7 +39,7 @@ A modern, responsive portfolio website built with **React 19**, **Tailwind CSS**
 
 ```bash
 # Clone the repository
-git clone https://github.com/Chen4jin/frontend.git
+git clone git@github-personal:Chen4jin/frontend.git
 cd frontend
 
 # Install dependencies
@@ -234,5 +234,5 @@ Private - All rights reserved.
 
 **Jin Chen**
 - Website: [chenjq.com](https://chenjq.com)
-- GitHub: [@chenjq](https://github.com/chenjq)
-- LinkedIn: [/in/chenjq](https://linkedin.com/in/chenjq)
+- GitHub: [@Chen4jin](https://github.com/Chen4jin)
+- LinkedIn: [/in/chen4jin](https://www.linkedin.com/in/chen4jin/)

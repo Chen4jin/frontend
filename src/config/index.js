@@ -27,8 +27,8 @@ export const config = {
 
     // External Links
     links: {
-        github: 'https://github.com/chenjq',
-        linkedin: 'https://linkedin.com/in/chenjq',
+        github: 'https://github.com/Chen4jin',
+        linkedin: 'https://www.linkedin.com/in/chen4jin/',
         resume: 'https://d3bjrjf10s3vbi.cloudfront.net/static/CV.pdf',
         profileImage: 'https://d3bjrjf10s3vbi.cloudfront.net/static/selfie.png',
     },
