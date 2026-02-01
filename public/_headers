@@ -6,6 +6,11 @@
   Referrer-Policy: strict-origin-when-cross-origin
   Permissions-Policy: camera=(), microphone=(), geolocation=()
 
+# PWA manifest - explicit Content-Type avoids 403 on some hosts
+/manifest.json
+  Content-Type: application/manifest+json
+  Cache-Control: public, max-age=86400
+
 # Cache static assets
 /assets/*
   Cache-Control: public, max-age=31536000, immutable
