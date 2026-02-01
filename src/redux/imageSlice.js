@@ -32,6 +32,26 @@ export const fetchImages = createAsyncThunk(
     }
 );
 
+// Async thunk for deleting an image
+export const deleteImage = createAsyncThunk(
+    'images/deleteImage',
+    async (imageID, { rejectWithValue }) => {
+        try {
+            const url = `${BACKEND}${API_VERSION}images/${imageID}`;
+            
+            await axios.delete(url, {
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            });
+            
+            return imageID;
+        } catch (error) {
+            return rejectWithValue(error.response?.data?.message || 'Failed to delete image');
+        }
+    }
+);
+
 const initialState = {
     images: [],
     page: DEFAULT_PAGE_SIZE,
@@ -39,6 +59,8 @@ const initialState = {
     lastKey: null,
     loading: false,
     error: null,
+    deleting: false,
+    deleteError: null,
 };
 
 const imageSlice = createSlice({
@@ -55,6 +77,7 @@ const imageSlice = createSlice({
     },
     extraReducers: (builder) => {
         builder
+            // Fetch images
             .addCase(fetchImages.pending, (state) => {
                 state.loading = true;
                 state.error = null;
@@ -68,6 +91,19 @@ const imageSlice = createSlice({
             .addCase(fetchImages.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.payload;
+            })
+            // Delete image
+            .addCase(deleteImage.pending, (state) => {
+                state.deleting = true;
+                state.deleteError = null;
+            })
+            .addCase(deleteImage.fulfilled, (state, action) => {
+                state.images = state.images.filter(img => img.imageID !== action.payload);
+                state.deleting = false;
+            })
+            .addCase(deleteImage.rejected, (state, action) => {
+                state.deleting = false;
+                state.deleteError = action.payload;
             });
     },
 });

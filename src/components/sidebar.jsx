@@ -14,7 +14,7 @@ import { ROUTES } from '../constants';
 import {
     Logo,
     Squares2X2Icon,
-    CloudArrowUpIcon,
+    PhotoIcon,
     ArrowRightStartOnRectangleIcon,
     Bars3Icon,
     XMarkIcon,
@@ -29,9 +29,9 @@ const navigationItems = [
         exact: true,
     },
     {
-        name: 'Upload Photos',
+        name: 'Photos',
         to: ROUTES.DASHBOARD_UPLOAD,
-        icon: CloudArrowUpIcon,
+        icon: PhotoIcon,
     },
 ];
 

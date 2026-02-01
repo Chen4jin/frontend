@@ -101,16 +101,16 @@ const Collections = () => {
         isLoading: loading,
     });
 
-    // Initial load
+    // Initial load (only if not already loaded or loading)
     useEffect(() => {
-        if (!imagesLoaded) {
+        if (!imagesLoaded && !loading) {
             dispatch(fetchImages({ lastKey: "", page }))
                 .finally(() => setInitialLoading(false));
             dispatch(loadImage());
-        } else {
+        } else if (imagesLoaded) {
             setInitialLoading(false);
         }
-    }, [dispatch, imagesLoaded, page]);
+    }, [dispatch, imagesLoaded, loading, page]);
 
     // Retry handler
     const handleRetry = () => {
