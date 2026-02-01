@@ -7,6 +7,9 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
 import { BACKEND, API_VERSION } from '../config';
 
+// Constants
+const DEFAULT_PAGE_SIZE = 20;
+
 // Async thunk for fetching images
 export const fetchImages = createAsyncThunk(
     'images/fetchImages',
@@ -29,20 +32,22 @@ export const fetchImages = createAsyncThunk(
     }
 );
 
+const initialState = {
+    images: [],
+    page: DEFAULT_PAGE_SIZE,
+    hasMore: true,
+    lastKey: null,
+    loading: false,
+    error: null,
+};
+
 const imageSlice = createSlice({
     name: 'imageList',
-    initialState: {
-        images: [],
-        page: 10,
-        hasMore: true,
-        lastKey: null,
-        loading: false,
-        error: null,
-    },
+    initialState,
     reducers: {
         resetImages(state) {
             state.images = [];
-            state.page = 20;
+            state.page = DEFAULT_PAGE_SIZE;
             state.hasMore = true;
             state.lastKey = null;
             state.error = null;
@@ -56,7 +61,6 @@ const imageSlice = createSlice({
             })
             .addCase(fetchImages.fulfilled, (state, action) => {
                 state.images.push(...action.payload.apiResponse.data);
-                state.page = 10;
                 state.hasMore = action.payload.hasMore;
                 state.lastKey = action.payload.lastKey;
                 state.loading = false;

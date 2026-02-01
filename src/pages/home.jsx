@@ -3,33 +3,70 @@
  * Hero section with introduction and social links
  */
 
+import { useState, useEffect, useMemo } from 'react';
 import Navbar from '../components/navbar';
 import { ArrowDownTrayIcon, ArrowRightIcon, GitHubIcon, LinkedInIcon } from '../components/ui';
 import config from '../config';
-
-// Social links data
-const socialLinks = [
-    { 
-        name: 'Resume', 
-        href: config.links.resume, 
-        icon: ArrowDownTrayIcon,
-        download: true,
-    },
-    { 
-        name: 'GitHub', 
-        href: config.links.github, 
-        icon: GitHubIcon,
-        external: true,
-    },
-    { 
-        name: 'LinkedIn', 
-        href: config.links.linkedin, 
-        icon: LinkedInIcon,
-        external: true,
-    },
-];
+import { getProfileData } from '../services/profile';
 
 const Home = () => {
+    const [profileData, setProfileData] = useState({
+        selfie: config.links.profileImage, // Fallback to config
+        resume: config.links.resume,
+        socialLinks: {
+            github: config.links.github,
+            linkedin: config.links.linkedin,
+        },
+        siteMessage: null,
+    });
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchProfile = async () => {
+            try {
+                const data = await getProfileData();
+                setProfileData({
+                    selfie: data.selfie || config.links.profileImage,
+                    resume: data.resume || config.links.resume,
+                    socialLinks: {
+                        github: data.socialLinks?.github || config.links.github,
+                        linkedin: data.socialLinks?.linkedin || config.links.linkedin,
+                    },
+                    siteMessage: data.siteMessage,
+                });
+            } catch (error) {
+                console.error('Failed to fetch profile data:', error);
+                // Keep fallback values from config
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchProfile();
+    }, []);
+
+    // Build social links array with dynamic data (memoized)
+    const socialLinks = useMemo(() => [
+        { 
+            name: 'Resume', 
+            href: profileData.resume, 
+            icon: ArrowDownTrayIcon,
+            download: true,
+        },
+        { 
+            name: 'GitHub', 
+            href: profileData.socialLinks.github, 
+            icon: GitHubIcon,
+            external: true,
+        },
+        { 
+            name: 'LinkedIn', 
+            href: profileData.socialLinks.linkedin, 
+            icon: LinkedInIcon,
+            external: true,
+        },
+    ].filter(link => link.href), [profileData.resume, profileData.socialLinks.github, profileData.socialLinks.linkedin]);
+
     return (
         <div className="min-h-screen select-none bg-apple-bg">
             <Navbar />
@@ -42,12 +79,16 @@ const Home = () => {
                         {/* Profile Image */}
                         <div className="flex-shrink-0 opacity-0 animate-fade-in-scale">
                             <div className="relative group">
-                                <img
-                                    className="w-48 h-48 sm:w-56 sm:h-56 lg:w-72 lg:h-72 rounded-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.02]"
-                                    src={config.links.profileImage}
-                                    alt={config.app.name}
-                                    draggable="false"
-                                />
+                                {loading ? (
+                                    <div className="w-48 h-48 sm:w-56 sm:h-56 lg:w-72 lg:h-72 rounded-full bg-neutral-200 animate-pulse" />
+                                ) : (
+                                    <img
+                                        className="w-48 h-48 sm:w-56 sm:h-56 lg:w-72 lg:h-72 rounded-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.02]"
+                                        src={profileData.selfie}
+                                        alt={config.app.name}
+                                        draggable="false"
+                                    />
+                                )}
                                 <div className="absolute -inset-1 rounded-full bg-gradient-to-tr from-apple-gray-light via-transparent to-apple-gray-light/50 -z-10 opacity-60" />
                             </div>
                         </div>
@@ -75,6 +116,13 @@ const Home = () => {
                                     Photographer.
                                 </span>
                             </h2>
+                            
+                            {/* Site Message (if available) */}
+                            {profileData.siteMessage && (
+                                <p className="text-body-md max-w-xl mx-auto lg:mx-0 mb-6 p-4 rounded-xl bg-neutral-100 opacity-0 animate-fade-in-up animation-delay-500">
+                                    {profileData.siteMessage}
+                                </p>
+                            )}
                             
                             {/* Description */}
                             <p className="text-body-lg max-w-xl mx-auto lg:mx-0 mb-10 opacity-0 animate-fade-in-up animation-delay-500">

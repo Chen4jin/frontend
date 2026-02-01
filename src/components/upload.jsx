@@ -17,6 +17,10 @@ import {
 } from './ui';
 import { BACKEND, API_VERSION } from '../config';
 
+// Constants
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB in bytes
+const MAX_FILE_SIZE_DISPLAY = '10MB';
+
 const statusConfig = {
     pending: {
         icon: ArrowPathIcon,
@@ -79,13 +83,32 @@ const Upload = () => {
     };
 
     const addFiles = (newFiles) => {
-        const fileItems = newFiles.map(file => ({
-            id: nanoid(),
-            data: file,
-            status: 'pending',
-            preview: URL.createObjectURL(file),
-        }));
-        setFiles(prev => [...prev, ...fileItems]);
+        const validFiles = [];
+        const oversizedFiles = [];
+
+        newFiles.forEach(file => {
+            if (file.size > MAX_FILE_SIZE) {
+                oversizedFiles.push(file.name);
+            } else {
+                validFiles.push(file);
+            }
+        });
+
+        // Show warning for oversized files
+        if (oversizedFiles.length > 0) {
+            toast.error(`${oversizedFiles.length} file(s) exceed ${MAX_FILE_SIZE_DISPLAY} limit`);
+        }
+
+        // Add valid files
+        if (validFiles.length > 0) {
+            const fileItems = validFiles.map(file => ({
+                id: nanoid(),
+                data: file,
+                status: 'pending',
+                preview: URL.createObjectURL(file),
+            }));
+            setFiles(prev => [...prev, ...fileItems]);
+        }
     };
 
     const removeFile = (id) => {
@@ -116,17 +139,26 @@ const Upload = () => {
             updateFileStatus(file.id, 'uploading');
             
             try {
-                const responseData = (await axios.put(BACKEND + API_VERSION + 'images')).data['data'];
+                // Get content type from file, default to jpeg
+                const contentType = file.data.type || 'image/jpeg';
+                
+                // Request presigned URL with content type
+                const responseData = (await axios.put(
+                    `${BACKEND}${API_VERSION}images?contentType=${encodeURIComponent(contentType)}`
+                )).data['data'];
                 const signedURL = responseData['url'];
                 const imageID = responseData['imageID'];
                 
-                const response = await axios.put(signedURL, file.data, {
+                // Use fetch for S3 upload (axios adds extra headers that break signature)
+                const uploadResponse = await fetch(signedURL, {
+                    method: 'PUT',
                     headers: {
-                        'Content-Type': file.data.type || 'image/jpeg',
+                        'Content-Type': contentType,
                     },
+                    body: file.data,
                 });
 
-                if (response && response.status === 200) {
+                if (uploadResponse.ok) {
                     await axios.post(BACKEND + API_VERSION + 'images', {
                         imageID: imageID,
                         fileName: file.data.name,

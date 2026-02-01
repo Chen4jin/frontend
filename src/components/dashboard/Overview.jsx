@@ -3,7 +3,7 @@
  * Main dashboard page with profile management features
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { toast } from 'sonner';
 import {
@@ -20,15 +20,21 @@ import {
     LinkedInIcon,
 } from '../ui';
 import { BACKEND, API_VERSION } from '../../config';
+import { getProfileData } from '../../services/profile';
 
 const Overview = () => {
+    // Loading state for initial data fetch
+    const [initialLoading, setInitialLoading] = useState(true);
+
     // Selfie state
     const [selfie, setSelfie] = useState(null);
     const [selfiePreview, setSelfiePreview] = useState(null);
+    const [currentSelfieUrl, setCurrentSelfieUrl] = useState(null);
     const [uploadingSelfie, setUploadingSelfie] = useState(false);
     
     // Resume state
     const [resume, setResume] = useState(null);
+    const [currentResumeUrl, setCurrentResumeUrl] = useState(null);
     const [uploadingResume, setUploadingResume] = useState(false);
 
     // Social links state
@@ -41,6 +47,37 @@ const Overview = () => {
     // Site message state
     const [siteMessage, setSiteMessage] = useState('');
     const [savingMessage, setSavingMessage] = useState(false);
+
+    // Fetch existing profile data on mount
+    useEffect(() => {
+        const fetchExistingData = async () => {
+            try {
+                const data = await getProfileData();
+                
+                if (data.selfie) {
+                    setCurrentSelfieUrl(data.selfie);
+                }
+                if (data.resume) {
+                    setCurrentResumeUrl(data.resume);
+                }
+                if (data.socialLinks) {
+                    setSocialLinks({
+                        github: data.socialLinks.github || '',
+                        linkedin: data.socialLinks.linkedin || '',
+                    });
+                }
+                if (data.siteMessage) {
+                    setSiteMessage(data.siteMessage);
+                }
+            } catch (error) {
+                console.error('Failed to fetch profile data:', error);
+            } finally {
+                setInitialLoading(false);
+            }
+        };
+
+        fetchExistingData();
+    }, []);
 
     // Handle selfie file selection
     const handleSelfieChange = (e) => {
@@ -58,14 +95,38 @@ const Overview = () => {
         setUploadingSelfie(true);
 
         try {
-            const responseData = (await axios.put(BACKEND + API_VERSION + 'selfie')).data['data'];
+            // Get content type from file, default to jpeg
+            const contentType = selfie.type || 'image/jpeg';
+            
+            // Request presigned URL with content type
+            const requestUrl = `${BACKEND}${API_VERSION}selfie?contentType=${encodeURIComponent(contentType)}`;
+            const response = await axios.put(requestUrl);
+            const responseData = response.data['data'];
             const signedURL = responseData['url'];
             
-            await axios.put(signedURL, selfie, {
-                headers: { 'Content-Type': selfie.type || 'image/jpeg' },
+            // Use fetch for S3 upload (axios adds extra headers that break signature)
+            const uploadResponse = await fetch(signedURL, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': contentType,
+                },
+                body: selfie,
             });
 
+            if (!uploadResponse.ok) {
+                throw new Error(`S3 upload failed: ${uploadResponse.status}`);
+            }
+
             toast.success('Profile photo uploaded!');
+            
+            // Fetch the new selfie URL from API
+            const newSelfieData = await axios.get(`${BACKEND}${API_VERSION}selfie`);
+            const newSelfieUrl = newSelfieData.data?.data?.url;
+            if (newSelfieUrl) {
+                // Add cache-busting param to force browser to fetch new image
+                setCurrentSelfieUrl(`${newSelfieUrl}?t=${Date.now()}`);
+            }
+            
             setSelfie(null);
             setSelfiePreview(null);
         } catch (error) {
@@ -94,11 +155,28 @@ const Overview = () => {
             const responseData = (await axios.put(BACKEND + API_VERSION + 'resume')).data['data'];
             const signedURL = responseData['url'];
             
-            await axios.put(signedURL, resume, {
-                headers: { 'Content-Type': resume.type || 'application/pdf' },
+            // Use fetch for S3 upload (axios adds extra headers that break signature)
+            const uploadResponse = await fetch(signedURL, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/pdf',
+                },
+                body: resume,
             });
 
+            if (!uploadResponse.ok) {
+                throw new Error(`S3 upload failed: ${uploadResponse.status}`);
+            }
+
             toast.success('Resume uploaded!');
+            
+            // Fetch the new resume URL from API
+            const newResumeData = await axios.get(`${BACKEND}${API_VERSION}resume`);
+            const newResumeUrl = newResumeData.data?.data?.url;
+            if (newResumeUrl) {
+                setCurrentResumeUrl(newResumeUrl);
+            }
+            
             setResume(null);
         } catch (error) {
             console.error('Resume upload error:', error);
@@ -180,13 +258,17 @@ const Overview = () => {
                             <div className={`
                                 w-full aspect-square max-w-[180px] mx-auto rounded-full overflow-hidden
                                 border-2 border-dashed transition-all duration-200
-                                ${selfiePreview 
+                                ${selfiePreview || currentSelfieUrl
                                     ? 'border-transparent' 
                                     : 'border-neutral-200 hover:border-neutral-300 bg-neutral-50'
                                 }
                             `}>
                                 {selfiePreview ? (
                                     <img src={selfiePreview} alt="Preview" className="w-full h-full object-cover" />
+                                ) : currentSelfieUrl ? (
+                                    <img src={currentSelfieUrl} alt="Current" className="w-full h-full object-cover opacity-80" />
+                                ) : initialLoading ? (
+                                    <div className="w-full h-full bg-neutral-100 animate-pulse" />
                                 ) : (
                                     <div className="w-full h-full flex flex-col items-center justify-center text-neutral-400">
                                         <PhotoIcon className="w-8 h-8 mb-2" strokeWidth={1} />
@@ -196,6 +278,9 @@ const Overview = () => {
                             </div>
                             <input type="file" accept="image/*" className="hidden" onChange={handleSelfieChange} />
                         </label>
+                        {currentSelfieUrl && !selfiePreview && (
+                            <p className="text-xs text-center text-neutral-500">Current photo loaded. Select new to replace.</p>
+                        )}
 
                         {selfie && (
                             <button
@@ -253,6 +338,11 @@ const Overview = () => {
                                 onChange={handleResumeChange} 
                             />
                         </label>
+                        {currentResumeUrl && !resume && (
+                            <p className="text-xs text-center text-neutral-500">
+                                Current resume loaded. <a href={currentResumeUrl} target="_blank" rel="noopener noreferrer" className="text-neutral-700 hover:underline">View →</a>
+                            </p>
+                        )}
 
                         {resume && (
                             <button

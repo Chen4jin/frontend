@@ -10,6 +10,9 @@ export { default as Sidebar } from './sidebar';
 // Route guards
 export { default as PrivateRoute } from './PrivateRoute';
 
+// Error handling
+export { default as ErrorBoundary } from './ErrorBoundary';
+
 // Dashboard components
 export { default as Overview } from './dashboard/Overview';
 export { default as Upload } from './upload';

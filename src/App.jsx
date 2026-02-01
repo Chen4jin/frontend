@@ -19,6 +19,7 @@ import Dashboard from './pages/dashboard';
 
 // Components
 import PrivateRoute from './components/PrivateRoute';
+import ErrorBoundary from './components/ErrorBoundary';
 import Overview from './components/dashboard/Overview';
 import Upload from './components/upload';
 
@@ -74,25 +75,27 @@ const AppContent = () => {
 
 function App() {
     return (
-        <div className="App min-h-screen">
-            <Provider store={store}>
-                <BrowserRouter>
-                    <AppContent />
-                </BrowserRouter>
-            </Provider>
-            <Toaster 
-                position="top-center"
-                toastOptions={{
-                    style: {
-                        background: '#18181b',
-                        color: '#fff',
-                        border: 'none',
-                        borderRadius: '12px',
-                        fontSize: '14px',
-                    },
-                }}
-            />
-        </div>
+        <ErrorBoundary>
+            <div className="App min-h-screen">
+                <Provider store={store}>
+                    <BrowserRouter>
+                        <AppContent />
+                    </BrowserRouter>
+                </Provider>
+                <Toaster 
+                    position="top-center"
+                    toastOptions={{
+                        style: {
+                            background: '#18181b',
+                            color: '#fff',
+                            border: 'none',
+                            borderRadius: '12px',
+                            fontSize: '14px',
+                        },
+                    }}
+                />
+            </div>
+        </ErrorBoundary>
     );
 }
 

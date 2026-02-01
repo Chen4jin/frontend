@@ -3,7 +3,7 @@
  * Photo gallery with infinite scroll, lightbox, and proper loading/error states
  */
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, memo } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import Masonry, { ResponsiveMasonry } from 'react-responsive-masonry';
 
@@ -13,26 +13,31 @@ import { useInfiniteScroll } from '../hooks';
 import { fetchImages, resetImages } from '../redux/imageSlice';
 import { loadImage } from '../redux/setupSlice';
 
-// Skeleton loader for initial load
-const GallerySkeleton = () => (
+// Pre-generate skeleton heights to avoid random values on each render
+const SKELETON_HEIGHTS = [280, 320, 250, 300, 270, 310, 260, 290];
+
+// Skeleton loader for initial load (memoized)
+const GallerySkeleton = memo(() => (
     <ResponsiveMasonry columnsCountBreakPoints={{ 350: 1, 500: 2, 750: 3, 1000: 4 }}>
         <Masonry gutter="16px">
-            {[...Array(8)].map((_, i) => (
+            {SKELETON_HEIGHTS.map((height, i) => (
                 <div
                     key={i}
                     className="skeleton-loading rounded-xl"
                     style={{ 
-                        height: `${200 + Math.random() * 150}px`,
+                        height: `${height}px`,
                         animationDelay: `${i * 100}ms`
                     }}
                 />
             ))}
         </Masonry>
     </ResponsiveMasonry>
-);
+));
 
-// Empty state component
-const EmptyState = () => (
+GallerySkeleton.displayName = 'GallerySkeleton';
+
+// Empty state component (memoized)
+const EmptyState = memo(() => (
     <div className="flex flex-col items-center justify-center py-20 text-center">
         <div className="p-4 rounded-2xl bg-apple-bg-secondary mb-4">
             <PhotoIcon className="w-12 h-12 text-apple-gray" />
@@ -44,10 +49,12 @@ const EmptyState = () => (
             The gallery is empty. Check back later for new photos.
         </p>
     </div>
-);
+));
 
-// Error state component
-const ErrorState = ({ error, onRetry }) => (
+EmptyState.displayName = 'EmptyState';
+
+// Error state component (memoized)
+const ErrorState = memo(({ error, onRetry }) => (
     <div className="flex flex-col items-center justify-center py-20 text-center">
         <div className="p-4 rounded-2xl bg-red-50 mb-4">
             <ExclamationCircleIcon className="w-12 h-12 text-red-500" />
@@ -66,12 +73,14 @@ const ErrorState = ({ error, onRetry }) => (
             Try again
         </button>
     </div>
-);
+));
+
+ErrorState.displayName = 'ErrorState';
 
 const Collections = () => {
     const dispatch = useDispatch();
     const { images, hasMore, page, lastKey, loading, error } = useSelector((state) => state.imageList);
-    const { imagesLoad } = useSelector((state) => state.setup);
+    const { imagesLoaded } = useSelector((state) => state.setup);
     
     // Lightbox state
     const [lightboxOpen, setLightboxOpen] = useState(false);
@@ -94,14 +103,14 @@ const Collections = () => {
 
     // Initial load
     useEffect(() => {
-        if (!imagesLoad) {
+        if (!imagesLoaded) {
             dispatch(fetchImages({ lastKey: "", page }))
                 .finally(() => setInitialLoading(false));
             dispatch(loadImage());
         } else {
             setInitialLoading(false);
         }
-    }, [dispatch, imagesLoad, page]);
+    }, [dispatch, imagesLoaded, page]);
 
     // Retry handler
     const handleRetry = () => {
