@@ -7,7 +7,18 @@ import { useEffect, useCallback, useState } from 'react';
 import { Dialog, DialogPanel, DialogBackdrop, Transition, TransitionChild } from '@headlessui/react';
 import clsx from 'clsx';
 import { XMarkIcon, PhotoIcon } from './Icons';
-import { HiOutlineChevronLeft, HiOutlineChevronRight, HiOutlineInformationCircle, HiOutlineCamera } from 'react-icons/hi2';
+import {
+    HiOutlineChevronLeft,
+    HiOutlineChevronRight,
+    HiOutlineInformationCircle,
+    HiOutlineCamera,
+    HiOutlineCog6Tooth,
+    HiOutlineCalendarDays,
+    HiOutlineMapPin,
+    HiOutlineDocumentChartBar,
+    HiOutlinePhoto,
+    HiOutlineRectangleGroup,
+} from 'react-icons/hi2';
 
 // Progressive image loader component
 const ProgressiveImage = ({ src, alt, onLoad }) => {
@@ -31,8 +42,16 @@ const ProgressiveImage = ({ src, alt, onLoad }) => {
         };
     }, [src, onLoad]);
 
+    const preventSave = (e) => {
+        e.preventDefault();
+    };
+
     return (
-        <div className="relative flex items-center justify-center">
+        <div
+            className="relative flex items-center justify-center photo-protected"
+            onContextMenu={preventSave}
+            onDragStart={preventSave}
+        >
             {!isLoaded && (
                 <div className="absolute inset-0 flex items-center justify-center">
                     <div className="flex flex-col items-center gap-4">
@@ -51,7 +70,9 @@ const ProgressiveImage = ({ src, alt, onLoad }) => {
                         'transition-all duration-500 ease-out',
                         isLoaded ? 'opacity-100 scale-100' : 'opacity-0 scale-95'
                     )}
-                    draggable="false"
+                    draggable={false}
+                    onContextMenu={preventSave}
+                    onDragStart={preventSave}
                 />
             )}
 
@@ -105,9 +126,10 @@ const PhotoInfoPanel = ({ image, isOpen, onClose }) => {
     if (!isOpen) return null;
 
     // Check if there's any info to display
-    const hasInfo = image.camera || image.lens || image.aperture || image.shutter || 
+    const hasInfo = image.camera || image.lens || image.aperture || image.shutter ||
                     image.iso || image.focalLength || image.dateTaken || image.location ||
-                    image.title || image.description || image.fileName || image.sizeBytes;
+                    image.title || image.description || image.sizeBytes ||
+                    (image.width && image.height);
 
     return (
         <Transition show={isOpen}>
@@ -140,6 +162,10 @@ const PhotoInfoPanel = ({ image, isOpen, onClose }) => {
                         {/* Title & Description */}
                         {(image.title || image.description) && (
                             <div className="panel-divider">
+                                <h5 className="panel-section-title flex items-center gap-2">
+                                    <HiOutlineDocumentChartBar className="w-4 h-4 text-white/50" />
+                                    Title & description
+                                </h5>
                                 {image.title && (
                                     <h4 className="text-lg font-semibold text-white mb-1">
                                         {image.title}
@@ -156,7 +182,10 @@ const PhotoInfoPanel = ({ image, isOpen, onClose }) => {
                         {/* Camera & Lens */}
                         {(image.camera || image.lens) && (
                             <div className="panel-divider">
-                                <h5 className="panel-section-title">Equipment</h5>
+                                <h5 className="panel-section-title flex items-center gap-2">
+                                    <HiOutlineCamera className="w-4 h-4 text-white/50" />
+                                    Equipment
+                                </h5>
                                 <InfoItem 
                                     icon={HiOutlineCamera} 
                                     label="Camera" 
@@ -179,7 +208,10 @@ const PhotoInfoPanel = ({ image, isOpen, onClose }) => {
                         {/* Camera Settings */}
                         {(image.aperture || image.shutter || image.iso || image.focalLength) && (
                             <div className="panel-divider">
-                                <h5 className="panel-section-title">Settings</h5>
+                                <h5 className="panel-section-title flex items-center gap-2">
+                                    <HiOutlineCog6Tooth className="w-4 h-4 text-white/50" />
+                                    Settings
+                                </h5>
                                 <CameraSettings 
                                     aperture={image.aperture}
                                     shutter={image.shutter}
@@ -192,17 +224,13 @@ const PhotoInfoPanel = ({ image, isOpen, onClose }) => {
                         {/* Date & Location */}
                         {(image.dateTaken || image.location) && (
                             <div className="panel-divider">
-                                <h5 className="panel-section-title">Details</h5>
+                                <h5 className="panel-section-title flex items-center gap-2">
+                                    <HiOutlineCalendarDays className="w-4 h-4 text-white/50" />
+                                    Date & location
+                                </h5>
                                 {image.dateTaken && (
                                     <InfoItem 
-                                        icon={() => (
-                                            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                                                <rect x="3" y="4" width="18" height="18" rx="2" />
-                                                <line x1="3" y1="10" x2="21" y2="10" />
-                                                <line x1="8" y1="2" x2="8" y2="6" />
-                                                <line x1="16" y1="2" x2="16" y2="6" />
-                                            </svg>
-                                        )} 
+                                        icon={HiOutlineCalendarDays} 
                                         label="Date Taken" 
                                         value={typeof image.dateTaken === 'string' 
                                             ? image.dateTaken 
@@ -216,12 +244,7 @@ const PhotoInfoPanel = ({ image, isOpen, onClose }) => {
                                 )}
                                 {image.location && (
                                     <InfoItem 
-                                        icon={() => (
-                                            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                                                <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" />
-                                                <circle cx="12" cy="9" r="2.5" />
-                                            </svg>
-                                        )} 
+                                        icon={HiOutlineMapPin} 
                                         label="Location" 
                                         value={image.location} 
                                     />
@@ -229,23 +252,27 @@ const PhotoInfoPanel = ({ image, isOpen, onClose }) => {
                             </div>
                         )}
 
-                        {/* File Info */}
-                        {(image.fileName || image.sizeBytes || image.width || image.height) && (
+                        {/* Size & dimensions (no File / fileName) */}
+                        {(image.sizeBytes || (image.width && image.height)) && (
                             <div>
-                                <h5 className="panel-section-title">File</h5>
-                                {image.fileName && (
-                                    <p className="text-sm text-white/70 mb-1 break-all">
-                                        {image.fileName}
-                                    </p>
+                                <h5 className="panel-section-title flex items-center gap-2">
+                                    <HiOutlinePhoto className="w-4 h-4 text-white/50" />
+                                    Size & dimensions
+                                </h5>
+                                {image.sizeBytes && (
+                                    <InfoItem
+                                        icon={HiOutlineDocumentChartBar}
+                                        label="Size"
+                                        value={`${(image.sizeBytes / (1024 * 1024)).toFixed(2)} MB`}
+                                    />
                                 )}
-                                <div className="flex flex-wrap gap-2 text-xs text-white/50">
-                                    {image.sizeBytes && (
-                                        <span>{(image.sizeBytes / (1024 * 1024)).toFixed(2)} MB</span>
-                                    )}
-                                    {image.width && image.height && (
-                                        <span>{image.width} × {image.height}</span>
-                                    )}
-                                </div>
+                                {image.width && image.height && (
+                                    <InfoItem
+                                        icon={HiOutlineRectangleGroup}
+                                        label="Dimensions"
+                                        value={`${image.width} × ${image.height}`}
+                                    />
+                                )}
                             </div>
                         )}
 
@@ -453,11 +480,15 @@ export const Lightbox = ({
                             </button>
                         )}
 
-                        {/* Main image with progressive loading */}
-                        <div className={clsx(
-                            'relative flex items-center justify-center transition-all duration-300',
-                            showInfo && 'mr-80'
-                        )}>
+                        {/* Main image with progressive loading - protected from save/drag */}
+                        <div
+                            className={clsx(
+                                'relative flex items-center justify-center transition-all duration-300',
+                                showInfo && 'mr-80'
+                            )}
+                            onContextMenu={(e) => e.preventDefault()}
+                            onDragStart={(e) => e.preventDefault()}
+                        >
                             <ProgressiveImage
                                 src={currentImage.cloudFront}
                                 alt={currentImage.title || `Photo ${currentIndex + 1}`}

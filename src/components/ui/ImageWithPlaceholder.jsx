@@ -43,18 +43,21 @@ export const ImageWithPlaceholder = ({
                 <div className="absolute inset-0 skeleton-loading" />
             )}
             
-            {/* Actual image */}
+            {/* Actual image - protected from save/drag (discourage download) */}
             <img
                 className={`
-                    h-auto w-full transition-opacity duration-500 ease-out
+                    h-auto w-full transition-opacity duration-500 ease-out photo-protected
                     ${roundedClasses[rounded]}
                     ${isLoaded ? 'opacity-100' : 'opacity-0'}
                 `}
                 src={src}
                 alt={alt}
                 loading="lazy"
+                draggable={false}
                 onLoad={() => setIsLoaded(true)}
                 onError={() => setHasError(true)}
+                onContextMenu={(e) => e.preventDefault()}
+                onDragStart={(e) => e.preventDefault()}
             />
 
             {/* Error state */}

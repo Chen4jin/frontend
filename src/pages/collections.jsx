@@ -133,9 +133,9 @@ const Collections = () => {
     const showGallery = images.length > 0;
 
     return (
-        <div className="min-h-screen bg-apple-bg">
+        <div className="min-h-screen select-none bg-apple-bg">
             <Navbar />
-            <div className="container-default">
+            <div className="container-default cursor-default">
                 {/* Header Section */}
                 <div className="max-w-2xl py-16 sm:py-24 lg:py-20">
                     <p className="text-label mb-3 opacity-0 animate-fade-in-up animation-delay-100">
@@ -172,9 +172,9 @@ const Collections = () => {
                                 <Masonry gutter="16px">
                                     {images.map((image, index) => (
                                         <button
-                                            key={image.imageID}
+                                            key={image.imageID ? `${image.imageID}-${index}` : `image-${index}`}
                                             onClick={() => openLightbox(index)}
-                                            className="block w-full text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-apple-black focus-visible:ring-offset-2 rounded-xl transition-transform duration-300 hover:scale-[1.02]"
+                                            className="block w-full text-left cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-apple-black focus-visible:ring-offset-2 rounded-xl transition-transform duration-300 hover:scale-[1.02]"
                                             aria-label={`View ${image.title || `Photo ${index + 1}`}`}
                                         >
                                             <ImageWithPlaceholder

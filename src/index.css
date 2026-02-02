@@ -506,3 +506,13 @@
 .skeleton-avatar {
     @apply skeleton-loading w-12 h-12 rounded-full;
 }
+
+/* =============================================
+   PHOTO PROTECTION (discourage download/save)
+   ============================================= */
+.photo-protected {
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-user-drag: none;
+    pointer-events: auto;
+}

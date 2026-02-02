@@ -52,6 +52,34 @@ export const deleteImage = createAsyncThunk(
     }
 );
 
+// Metadata fields that can be updated (partial update)
+const METADATA_FIELDS = [
+    'title', 'description', 'camera', 'lens', 'location', 'dateTaken',
+    'aperture', 'shutter', 'iso', 'focalLength',
+];
+
+// Async thunk for updating image metadata
+export const updateImage = createAsyncThunk(
+    'images/updateImage',
+    async ({ imageID, ...payload }, { rejectWithValue }) => {
+        try {
+            const url = `${BACKEND}${API_VERSION}images/${imageID}`;
+            const body = METADATA_FIELDS.reduce((acc, key) => {
+                if (payload[key] !== undefined) acc[key] = payload[key];
+                return acc;
+            }, {});
+
+            const response = await axios.patch(url, body, {
+                headers: { 'Content-Type': 'application/json' },
+            });
+            const updated = response.data?.data ?? response.data;
+            return { imageID, ...updated };
+        } catch (error) {
+            return rejectWithValue(error.response?.data?.message || 'Failed to update image');
+        }
+    }
+);
+
 const initialState = {
     images: [],
     page: DEFAULT_PAGE_SIZE,
@@ -61,6 +89,8 @@ const initialState = {
     error: null,
     deleting: false,
     deleteError: null,
+    updating: false,
+    updateError: null,
 };
 
 const imageSlice = createSlice({
@@ -104,6 +134,23 @@ const imageSlice = createSlice({
             .addCase(deleteImage.rejected, (state, action) => {
                 state.deleting = false;
                 state.deleteError = action.payload;
+            })
+            // Update image metadata
+            .addCase(updateImage.pending, (state) => {
+                state.updating = true;
+                state.updateError = null;
+            })
+            .addCase(updateImage.fulfilled, (state, action) => {
+                const { imageID, ...updated } = action.payload;
+                const index = state.images.findIndex((img) => img.imageID === imageID);
+                if (index !== -1) {
+                    state.images[index] = { ...state.images[index], ...updated };
+                }
+                state.updating = false;
+            })
+            .addCase(updateImage.rejected, (state, action) => {
+                state.updating = false;
+                state.updateError = action.payload;
             });
     },
 });

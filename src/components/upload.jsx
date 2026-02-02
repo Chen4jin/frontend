@@ -7,6 +7,7 @@ import { useState, useCallback, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import axios from 'axios';
 import { nanoid } from 'nanoid';
+import exifr from 'exifr';
 import { toast } from 'sonner';
 import {
     CloudArrowUpIcon,
@@ -16,14 +17,54 @@ import {
     TrashIcon,
     PhotoIcon,
     ExclamationCircleIcon,
+    PencilSquareIcon,
+    XMarkIcon,
+    Input,
 } from './ui';
 import { BACKEND, API_VERSION } from '../config';
-import { fetchImages, deleteImage, resetImages } from '../redux/imageSlice';
+import { fetchImages, deleteImage, updateImage, resetImages } from '../redux/imageSlice';
 import { loadImage } from '../redux/setupSlice';
 
 // Constants
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB in bytes
 const MAX_FILE_SIZE_DISPLAY = '10MB';
+
+// EXIF tags we need for photo metadata (pick only these for performance)
+const EXIF_PICK = ['Make', 'Model', 'LensModel', 'FNumber', 'ExposureTime', 'ISO', 'FocalLength', 'DateTimeOriginal'];
+
+/**
+ * Map exifr output to our metadata shape for create/update.
+ * @param {object|null} exif - Raw exifr.parse() result
+ * @returns {object} Fields suitable for API (camera, lens, aperture, shutter, iso, focalLength, dateTaken)
+ */
+function exifToMetadata(exif) {
+    if (!exif || typeof exif !== 'object') return {};
+    const out = {};
+    const make = exif.Make?.trim?.();
+    const model = exif.Model?.trim?.();
+    if (make || model) out.camera = [make, model].filter(Boolean).join(' ');
+    if (exif.LensModel) out.lens = String(exif.LensModel).trim();
+    if (exif.FNumber != null) out.aperture = String(exif.FNumber);
+    if (exif.ExposureTime != null) {
+        const t = exif.ExposureTime;
+        if (typeof t === 'number') {
+            out.shutter = t < 1 ? `1/${Math.round(1 / t)}` : `${t}s`;
+        } else {
+            out.shutter = String(t);
+        }
+    }
+    if (exif.ISO != null) out.iso = String(exif.ISO);
+    if (exif.FocalLength != null) {
+        const fl = exif.FocalLength;
+        out.focalLength = typeof fl === 'number' ? String(Math.round(fl)) : String(fl).replace(/\s*mm\s*/i, '').trim();
+    }
+    if (exif.DateTimeOriginal) {
+        const d = exif.DateTimeOriginal;
+        if (d instanceof Date) out.dateTaken = d.toISOString().slice(0, 10);
+        else if (typeof d === 'string') out.dateTaken = d.slice(0, 10);
+    }
+    return out;
+}
 
 const statusConfig = {
     pending: {
@@ -55,13 +96,15 @@ const statusConfig = {
 
 const Upload = () => {
     const dispatch = useDispatch();
-    const { images, loading: galleryLoading, deleting } = useSelector((state) => state.imageList);
+    const { images, loading: galleryLoading, deleting, updating } = useSelector((state) => state.imageList);
     const { imagesLoaded } = useSelector((state) => state.setup);
     
     const [files, setFiles] = useState([]);
     const [isDragging, setIsDragging] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
     const [deleteConfirmId, setDeleteConfirmId] = useState(null);
+    const [editImage, setEditImage] = useState(null);
+    const [metadataForm, setMetadataForm] = useState({});
     const [activeTab, setActiveTab] = useState('upload'); // 'upload' or 'manage'
 
     // Fetch gallery images on mount (only if not already loaded or loading)
@@ -83,10 +126,53 @@ const Upload = () => {
         }
     };
 
-    // Refresh gallery
+    // Refresh gallery (guarded to avoid overlapping requests)
     const refreshGallery = () => {
+        if (galleryLoading) return;
         dispatch(resetImages());
         dispatch(fetchImages({ lastKey: "", page: 50 }));
+    };
+
+    // Open edit metadata modal and init form from image
+    const openEditMetadata = (image) => {
+        setEditImage(image);
+        setMetadataForm({
+            title: image.title ?? '',
+            description: image.description ?? '',
+            camera: image.camera ?? '',
+            lens: image.lens ?? '',
+            location: image.location ?? '',
+            dateTaken: image.dateTaken
+                ? (typeof image.dateTaken === 'string' ? image.dateTaken : image.dateTaken?.slice?.(0, 10) ?? '')
+                : '',
+            aperture: image.aperture ?? '',
+            shutter: image.shutter ?? '',
+            iso: image.iso ?? '',
+            focalLength: image.focalLength ?? '',
+        });
+    };
+
+    const closeEditMetadata = () => {
+        setEditImage(null);
+        setMetadataForm({});
+    };
+
+    const handleMetadataChange = (field, value) => {
+        setMetadataForm((prev) => ({ ...prev, [field]: value ?? '' }));
+    };
+
+    const handleSaveMetadata = async () => {
+        if (!editImage?.imageID) return;
+        try {
+            await dispatch(updateImage({
+                imageID: editImage.imageID,
+                ...metadataForm,
+            })).unwrap();
+            toast.success('Metadata updated');
+            closeEditMetadata();
+        } catch (err) {
+            toast.error(err || 'Failed to update metadata');
+        }
     };
 
     const handleDragOver = useCallback((e) => {
@@ -194,10 +280,18 @@ const Upload = () => {
                 });
 
                 if (uploadResponse.ok) {
+                    let exifMetadata = {};
+                    try {
+                        const exif = await exifr.parse(file.data, { pick: EXIF_PICK });
+                        exifMetadata = exifToMetadata(exif);
+                    } catch {
+                        // No EXIF or unsupported format; continue without metadata
+                    }
                     await axios.post(BACKEND + API_VERSION + 'images', {
                         imageID: imageID,
                         fileName: file.data.name,
                         sizeBytes: file.data.size,
+                        ...exifMetadata,
                     });
                     updateFileStatus(file.id, 'success');
                     uploadedCount++;
@@ -347,7 +441,7 @@ const Upload = () => {
                                                 {file.preview ? (
                                                     <img 
                                                         src={file.preview} 
-                                                        alt={file.data.name}
+                                                        alt=""
                                                         className="w-full h-full object-cover"
                                                     />
                                                 ) : (
@@ -357,11 +451,8 @@ const Upload = () => {
                                                 )}
                                             </div>
 
-                                            {/* Info */}
+                                            {/* Info - size only, no filename/fileid */}
                                             <div className="flex-1 min-w-0">
-                                                <p className="text-sm font-medium text-neutral-900 truncate">
-                                                    {file.data.name}
-                                                </p>
                                                 <p className="text-xs text-neutral-500">
                                                     {(file.data.size / 1024).toFixed(1)} KB
                                                 </p>
@@ -494,9 +585,9 @@ const Upload = () => {
                     {/* Photo Grid */}
                     {images.length > 0 && (
                         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                            {images.map((image) => (
+                            {images.map((image, index) => (
                                 <div
-                                    key={image.imageID}
+                                    key={image.imageID ? `${image.imageID}-${index}` : `image-${index}`}
                                     className="group relative aspect-square rounded-xl overflow-hidden bg-neutral-100"
                                 >
                                     <img
@@ -506,11 +597,18 @@ const Upload = () => {
                                         loading="lazy"
                                     />
                                     
-                                    {/* Hover Overlay */}
+                                    {/* Hover Overlay - Edit & Delete */}
                                     <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors duration-200">
-                                        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                                        <div className="absolute inset-0 flex items-center justify-center gap-3 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                                             <button
-                                                onClick={() => setDeleteConfirmId(image.imageID)}
+                                                onClick={(e) => { e.stopPropagation(); openEditMetadata(image); }}
+                                                className="p-3 rounded-full bg-neutral-700 text-white hover:bg-neutral-800 transition-colors shadow-lg"
+                                                title="Edit metadata"
+                                            >
+                                                <PencilSquareIcon className="w-5 h-5" strokeWidth={2} />
+                                            </button>
+                                            <button
+                                                onClick={(e) => { e.stopPropagation(); setDeleteConfirmId(image.imageID); }}
                                                 className="p-3 rounded-full bg-red-500 text-white hover:bg-red-600 transition-colors shadow-lg"
                                                 title="Delete photo"
                                             >
@@ -522,11 +620,130 @@ const Upload = () => {
                                     {/* File info on hover */}
                                     <div className="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                                         <p className="text-xs text-white truncate">
-                                            {image.fileName || 'Untitled'}
+                                            {image.title || image.fileName || 'Untitled'}
                                         </p>
                                     </div>
                                 </div>
                             ))}
+                        </div>
+                    )}
+
+                    {/* Edit Metadata Modal */}
+                    {editImage && (
+                        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+                            <div className="bg-white rounded-2xl shadow-xl max-w-lg w-full max-h-[90vh] flex flex-col">
+                                <div className="flex items-center justify-between p-4 border-b border-neutral-200">
+                                    <h3 className="text-lg font-semibold text-neutral-900">
+                                        Edit photo metadata
+                                    </h3>
+                                    <button
+                                        onClick={closeEditMetadata}
+                                        className="p-2 rounded-lg text-neutral-500 hover:bg-neutral-100 transition-colors"
+                                        aria-label="Close"
+                                    >
+                                        <XMarkIcon className="w-5 h-5" strokeWidth={2} />
+                                    </button>
+                                </div>
+                                <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                                    <div className="rounded-xl overflow-hidden bg-neutral-100 mb-4">
+                                        <img
+                                            src={editImage.cloudFront}
+                                            alt={editImage.title || editImage.fileName || 'Photo'}
+                                            className="w-full h-40 object-cover"
+                                        />
+                                    </div>
+                                    <Input
+                                        label="Title"
+                                        value={metadataForm.title}
+                                        onChange={(e) => handleMetadataChange('title', e.target.value)}
+                                        placeholder="Photo title"
+                                    />
+                                    <div>
+                                        <label htmlFor="edit-metadata-description" className="block text-sm font-medium text-neutral-900 mb-2">Description</label>
+                                        <textarea
+                                            id="edit-metadata-description"
+                                            value={metadataForm.description}
+                                            onChange={(e) => handleMetadataChange('description', e.target.value)}
+                                            placeholder="Optional description"
+                                            rows={3}
+                                            className="input-field resize-none"
+                                        />
+                                    </div>
+                                    <div className="text-sm font-medium text-neutral-700 pt-2 border-t border-neutral-100">Equipment & settings</div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <Input
+                                            label="Camera"
+                                            value={metadataForm.camera}
+                                            onChange={(e) => handleMetadataChange('camera', e.target.value)}
+                                            placeholder="e.g. Canon EOS R5"
+                                        />
+                                        <Input
+                                            label="Lens"
+                                            value={metadataForm.lens}
+                                            onChange={(e) => handleMetadataChange('lens', e.target.value)}
+                                            placeholder="e.g. 24-70mm f/2.8"
+                                        />
+                                        <Input
+                                            label="Aperture"
+                                            value={metadataForm.aperture}
+                                            onChange={(e) => handleMetadataChange('aperture', e.target.value)}
+                                            placeholder="e.g. 2.8"
+                                        />
+                                        <Input
+                                            label="Shutter"
+                                            value={metadataForm.shutter}
+                                            onChange={(e) => handleMetadataChange('shutter', e.target.value)}
+                                            placeholder="e.g. 1/250"
+                                        />
+                                        <Input
+                                            label="ISO"
+                                            value={metadataForm.iso}
+                                            onChange={(e) => handleMetadataChange('iso', e.target.value)}
+                                            placeholder="e.g. 400"
+                                        />
+                                        <Input
+                                            label="Focal length"
+                                            value={metadataForm.focalLength}
+                                            onChange={(e) => handleMetadataChange('focalLength', e.target.value)}
+                                            placeholder="e.g. 50"
+                                        />
+                                    </div>
+                                    <Input
+                                        label="Location"
+                                        value={metadataForm.location}
+                                        onChange={(e) => handleMetadataChange('location', e.target.value)}
+                                        placeholder="Where was this taken?"
+                                    />
+                                    <Input
+                                        label="Date taken"
+                                        type="date"
+                                        value={metadataForm.dateTaken}
+                                        onChange={(e) => handleMetadataChange('dateTaken', e.target.value)}
+                                    />
+                                </div>
+                                <div className="flex gap-3 p-4 border-t border-neutral-200">
+                                    <button
+                                        onClick={closeEditMetadata}
+                                        className="flex-1 px-4 py-2.5 rounded-full text-sm font-medium text-neutral-700 bg-neutral-100 hover:bg-neutral-200 transition-colors"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        onClick={handleSaveMetadata}
+                                        disabled={updating}
+                                        className="flex-1 px-4 py-2.5 rounded-full text-sm font-medium text-white bg-neutral-900 hover:bg-neutral-800 disabled:opacity-50 flex items-center justify-center gap-2 transition-colors"
+                                    >
+                                        {updating ? (
+                                            <>
+                                                <ArrowPathIcon className="w-4 h-4 animate-spin" strokeWidth={2} />
+                                                Saving...
+                                            </>
+                                        ) : (
+                                            'Save metadata'
+                                        )}
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     )}
 
